@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Summer OS</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Summer OS">
+<meta name="theme-color" content="#0e0e0f">
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e0e0f;--surface:#161618;--card:#1c1c1f;--border:#2a2a2e;--border-light:#333338;
+  --text:#f0ede8;--muted:#888880;--faint:#2a2a2e;
+  --work:#5b8dee;--work-bg:#1a2540;
+  --activity:#e07b4a;--activity-bg:#2e1a0e;
+  --food:#5cb87a;--food-bg:#0e261a;
+  --sleep:#9b7fe8;--sleep-bg:#1e1530;
+  --church:#e8c56a;--church-bg:#28200a;
+  --danger:#e05b5b;--danger-bg:#2e0e0e;
+}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column}
+header{padding:1.25rem 2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.logo{font-size:17px;font-weight:600;letter-spacing:-.4px}
+.logo span{color:var(--muted);font-weight:300}
+.header-meta{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace}
+.tab-bar{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto}
+.tab-btn{padding:10px 20px;font-size:12px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;font-family:'DM Sans',sans-serif}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--text);border-bottom-color:var(--activity)}
+.content{flex:1;overflow-y:auto;padding:1.75rem 2rem}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem}
+.card-sm{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem}
+.section-title{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:500;margin-bottom:1rem}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem}
+.stat-label{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace}
+.stat-value{font-size:26px;font-weight:600;letter-spacing:-.5px;margin-top:4px}
+.stat-sub{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px}
+.green{color:var(--food)}.blue{color:var(--work)}.amber{color:var(--church)}.coral{color:var(--activity)}.purple{color:var(--sleep)}
+.progress-wrap{background:var(--border);border-radius:100px;height:8px;margin:10px 0}
+.progress-bar{height:100%;border-radius:100px;background:var(--food);transition:width .4s ease}
+.form-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:1rem;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:100px}
+.field label{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace}
+input,select,textarea{background:var(--surface);border:1px solid var(--border-light);color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:7px 10px;border-radius:7px;outline:none;width:100%;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--activity)}
+select option{background:var(--surface)}
+.btn{padding:7px 16px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border-light);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all .15s}
+.btn:hover{border-color:var(--activity);color:var(--activity)}
+.btn-primary{background:var(--activity-bg);border-color:var(--activity);color:var(--activity)}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn-danger{border-color:var(--danger);color:var(--danger)}
+.log-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:.75rem}
+.log-table th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--border);font-weight:500}
+.log-table td{padding:8px 8px;border-bottom:1px solid var(--faint);color:var(--text);font-family:'DM Mono',monospace;font-size:12px;vertical-align:middle}
+.log-table tr:last-child td{border-bottom:none}
+.log-table tr:hover td{background:var(--surface)}
+.delete-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 4px;line-height:1}
+.delete-btn:hover{color:var(--danger)}
+.empty-state{text-align:center;padding:2rem;color:var(--muted);font-size:13px}
+.habit-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:.5rem}
+.habit-day-label{font-size:10px;color:var(--muted);text-align:center;font-family:'DM Mono',monospace;margin-bottom:4px}
+.habit-cell{width:100%;aspect-ratio:1;border-radius:5px;border:1px solid var(--border);cursor:pointer;transition:all .15s;background:transparent}
+.habit-cell.done{background:var(--food);border-color:var(--food)}
+.habit-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--faint)}
+.habit-row:last-child{border-bottom:none}
+.habit-name{flex:1;font-size:13px}
+.habit-check{width:22px;height:22px;border-radius:6px;border:1px solid var(--border-light);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.habit-check.checked{background:var(--food-bg);border-color:var(--food)}
+.habit-check.checked::after{content:'✓';font-size:12px;color:var(--food)}
+.day-nav{display:flex;gap:4px;margin-bottom:1.25rem;flex-wrap:wrap}
+.day-chip{padding:6px 14px;border-radius:7px;border:1px solid var(--border);cursor:pointer;font-size:12px;color:var(--muted);transition:all .15s;font-family:'DM Mono',monospace}
+.day-chip:hover{border-color:var(--border-light);color:var(--text)}
+.day-chip.active{background:var(--card);border-color:var(--border-light);color:var(--text)}
+.block-list{display:flex;flex-direction:column;gap:3px}
+.sblock{display:flex;align-items:stretch;gap:10px;min-height:48px}
+.sblock-time{width:64px;flex-shrink:0;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);padding-top:13px;text-align:right}
+.sblock-bar{flex:1;border-radius:8px;padding:10px 14px;border-left:3px solid transparent}
+.sblock-label{font-size:13px;font-weight:500}
+.sblock-sub{font-size:11px;margin-top:2px;opacity:.7;font-family:'DM Mono',monospace}
+.b-work{background:var(--work-bg);border-color:var(--work)}.b-work .sblock-label{color:#adc4f5}.b-work .sblock-sub{color:var(--work)}
+.b-activity{background:var(--activity-bg);border-color:var(--activity)}.b-activity .sblock-label{color:#f5b990}.b-activity .sblock-sub{color:var(--activity)}
+.b-food{background:var(--food-bg);border-color:var(--food)}.b-food .sblock-label{color:#96d9aa}.b-food .sblock-sub{color:var(--food)}
+.b-sleep{background:var(--sleep-bg);border-color:var(--sleep)}.b-sleep .sblock-label{color:#c4aeee}.b-sleep .sblock-sub{color:var(--sleep)}
+.b-church{background:var(--church-bg);border-color:var(--church)}.b-church .sblock-label{color:#f0d898}.b-church .sblock-sub{color:var(--church)}
+.b-buffer{background:var(--surface);border-color:var(--border-light)}.b-buffer .sblock-label{color:var(--text)}.b-buffer .sblock-sub{color:var(--muted)}
+.sdivider{height:1px;background:var(--faint);margin:2px 0 2px 74px}
+.act-select{background:var(--surface);border:1px solid var(--border-light);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:4px 8px;border-radius:6px;cursor:pointer;outline:none;margin-top:6px}
+.club-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:1rem}
+.club-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;transition:all .15s}
+.club-card:hover{border-color:var(--border-light)}
+.club-card.selected{border-color:var(--activity);background:var(--activity-bg)}
+.club-name{font-size:12px;font-weight:500}
+.club-dist{font-size:20px;font-weight:600;font-family:'DM Mono',monospace;color:var(--activity);margin-top:2px}
+.club-unit{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace}
+.exercise-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
+.ex-tab{padding:5px 12px;border-radius:6px;border:1px solid var(--border);font-size:11px;cursor:pointer;font-family:'DM Mono',monospace;color:var(--muted);transition:all .15s}
+.ex-tab:hover{color:var(--text)}
+.ex-tab.active{background:var(--work-bg);border-color:var(--work);color:#adc4f5}
+.pr-badge{display:inline-flex;align-items:center;gap:4px;background:var(--church-bg);border:1px solid var(--church);border-radius:4px;padding:2px 7px;font-size:10px;font-family:'DM Mono',monospace;color:var(--church)}
+/* settings panel */
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--faint)}
+.settings-row:last-child{border-bottom:none}
+.settings-label{font-size:13px}
+.settings-sub{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px}
+@media(max-width:700px){
+  .grid-2,.grid-3,.grid-4{grid-template-columns:1fr}
+  .content{padding:1rem}
+  header{padding:1rem}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo" id="app-logo">Summer OS <span id="app-name-display">/ Eli</span></div>
+  <div class="header-meta" id="header-date"></div>
+</header>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="showTab('dashboard',this)">Dashboard</button>
+  <button class="tab-btn" onclick="showTab('schedule',this)">Schedule</button>
+  <button class="tab-btn" onclick="showTab('savings',this)">Savings</button>
+  <button class="tab-btn" onclick="showTab('gym',this)">Gym</button>
+  <button class="tab-btn" onclick="showTab('golf',this)">Golf</button>
+  <button class="tab-btn" onclick="showTab('habits',this)">Habits</button>
+  <button class="tab-btn" onclick="showTab('tennis',this)">Tennis</button>
+  <button class="tab-btn" onclick="showTab('settings',this)">Settings</button>
+</div>
+
+<div class="content">
+
+<!-- DASHBOARD -->
+<div class="tab-panel active" id="panel-dashboard">
+  <div class="grid-4" style="margin-bottom:1rem">
+    <div class="stat"><div class="stat-label">balance</div><div class="stat-value green" id="dash-balance">—</div><div class="stat-sub">goal: $10,000</div></div>
+    <div class="stat"><div class="stat-label">weeks left</div><div class="stat-value amber" id="dash-weeks">—</div><div class="stat-sub">deadline Jul 31</div></div>
+    <div class="stat"><div class="stat-label">gym sessions</div><div class="stat-value blue" id="dash-gym">—</div><div class="stat-sub">this summer</div></div>
+    <div class="stat"><div class="stat-label">rounds played</div><div class="stat-value coral" id="dash-rounds">—</div><div class="stat-sub">meadowlark free: <span id="dash-mead">—</span></div></div>
+  </div>
+  <div style="margin-bottom:1rem">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+        <div class="section-title" style="margin:0">savings progress</div>
+        <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted)" id="dash-progress-pct">0%</div>
+      </div>
+      <div class="progress-wrap"><div class="progress-bar" id="dash-progress-bar" style="width:0%"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted)">
+        <span id="dash-start-label">—</span><span id="dash-goal-label">—</span>
+      </div>
+    </div>
+  </div>
+  <div class="grid-2" style="margin-bottom:1rem">
+    <div class="card"><div class="section-title">today's habits</div><div id="dash-habits-today"></div></div>
+    <div class="card">
+      <div class="section-title">non-negotiables</div>
+      <div style="display:flex;flex-direction:column;gap:8px" id="dash-rules"></div>
+    </div>
+  </div>
+  <div class="card"><div class="section-title">recent gym PRs</div><div id="dash-prs"></div></div>
+</div>
+
+<!-- SCHEDULE -->
+<div class="tab-panel" id="panel-schedule">
+  <div class="day-nav" id="day-nav">
+    <div class="day-chip active" onclick="selectDay(0,this)">Mon</div>
+    <div class="day-chip" onclick="selectDay(1,this)">Tue</div>
+    <div class="day-chip" onclick="selectDay(2,this)">Wed</div>
+    <div class="day-chip" onclick="selectDay(3,this)">Thu</div>
+    <div class="day-chip" onclick="selectDay(4,this)">Fri</div>
+    <div class="day-chip" onclick="selectDay(5,this)">Sat</div>
+    <div class="day-chip" onclick="selectDay(6,this)">Sun</div>
+  </div>
+  <div style="display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap;margin-bottom:1rem">
+    <div style="flex:1;min-width:200px">
+      <div style="font-size:13px;font-weight:500" id="sched-day-title">Monday</div>
+      <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px" id="sched-day-sub"></div>
+    </div>
+    <div id="sched-act-wrap" style="display:flex;align-items:center;gap:8px">
+      <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">activity:</div>
+      <select class="act-select" id="sched-act-select" onchange="setSchedActivity(this.value)"></select>
+    </div>
+  </div>
+  <div class="block-list" id="sched-blocks"></div>
+</div>
+
+<!-- SAVINGS -->
+<div class="tab-panel" id="panel-savings">
+  <div class="grid-4" style="margin-bottom:1.25rem">
+    <div class="stat"><div class="stat-label">current balance</div><div class="stat-value green" id="sav-balance">—</div><div class="stat-sub" id="sav-remaining">—</div></div>
+    <div class="stat"><div class="stat-label">needed/week</div><div class="stat-value blue" id="sav-per-week">—</div><div class="stat-sub" id="sav-weeks">—</div></div>
+    <div class="stat"><div class="stat-label">hrs to goal</div><div class="stat-value amber" id="sav-hours">—</div><div class="stat-sub" id="sav-rate-label">—</div></div>
+    <div class="stat"><div class="stat-label">on track?</div><div class="stat-value" id="sav-ontrack">—</div><div class="stat-sub" id="sav-ontrack-sub">—</div></div>
+  </div>
+  <div class="card" style="margin-bottom:1rem">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+      <div class="section-title" style="margin:0">progress to goal</div>
+      <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted)" id="sav-pct">0%</div>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" id="sav-bar" style="width:0%"></div></div>
+    <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted)">
+      <span id="sav-start">—</span><span id="sav-goal">—</span>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="section-title">log entry</div>
+      <div class="form-row">
+        <div class="field"><label>date</label><input type="date" id="sav-date"></div>
+        <div class="field"><label>type</label><select id="sav-type"><option value="paycheck">Paycheck</option><option value="balance">Balance update</option><option value="expense">Expense</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>amount ($)</label><input type="number" id="sav-amount" placeholder="0.00" step="0.01"></div>
+        <div class="field"><label>note</label><input type="text" id="sav-note" placeholder="optional"></div>
+        <button class="btn btn-primary" onclick="logSavings()">Log</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">log history</div>
+      <div style="overflow-x:auto"><table class="log-table"><thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Note</th><th></th></tr></thead><tbody id="sav-log-body"></tbody></table>
+      <div class="empty-state" id="sav-empty">No entries yet.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- GYM -->
+<div class="tab-panel" id="panel-gym">
+  <div class="exercise-tabs" id="ex-tabs"></div>
+  <div class="grid-2" style="margin-bottom:1rem">
+    <div class="card">
+      <div class="section-title">log set</div>
+      <div class="form-row">
+        <div class="field"><label>date</label><input type="date" id="gym-date"></div>
+        <div class="field"><label>exercise</label><select id="gym-exercise"></select></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>weight (lbs)</label><input type="number" id="gym-weight" placeholder="135"></div>
+        <div class="field"><label>reps</label><input type="number" id="gym-reps" placeholder="8"></div>
+        <div class="field"><label>sets</label><input type="number" id="gym-sets" placeholder="3"></div>
+        <button class="btn btn-primary" onclick="logGym()">Log</button>
+      </div>
+      <div class="form-row" style="margin-bottom:0">
+        <div class="field"><label>add exercise</label><input type="text" id="gym-custom-ex" placeholder="e.g. Bulgarian split squat"></div>
+        <button class="btn" onclick="addExercise()">Add</button>
+      </div>
+    </div>
+    <div class="card"><div class="section-title">personal records</div><div id="gym-prs"></div></div>
+  </div>
+  <div class="card">
+    <div class="section-title">log — <span id="gym-log-ex-label" style="color:var(--work)">all exercises</span></div>
+    <div style="overflow-x:auto"><table class="log-table"><thead><tr><th>Date</th><th>Exercise</th><th>Weight</th><th>Reps</th><th>Sets</th><th>Volume</th><th></th></tr></thead><tbody id="gym-log-body"></tbody></table>
+    <div class="empty-state" id="gym-empty">No sessions logged yet.</div></div>
+  </div>
+</div>
+
+<!-- GOLF -->
+<div class="tab-panel" id="panel-golf">
+  <div class="grid-4" style="margin-bottom:1.25rem">
+    <div class="stat"><div class="stat-label">rounds played</div><div class="stat-value coral" id="golf-rounds-total">0</div><div class="stat-sub">this summer</div></div>
+    <div class="stat"><div class="stat-label">avg score (18)</div><div class="stat-value amber" id="golf-avg-score">—</div><div class="stat-sub">lower is better</div></div>
+    <div class="stat"><div class="stat-label">best round</div><div class="stat-value green" id="golf-best">—</div><div class="stat-sub" id="golf-best-course">—</div></div>
+    <div class="stat"><div class="stat-label">meadowlark free</div><div class="stat-value blue" id="golf-mead-left">3</div><div class="stat-sub">rounds w/ Josh</div></div>
+  </div>
+  <div class="grid-2" style="margin-bottom:1rem">
+    <div class="card">
+      <div class="section-title">log round</div>
+      <div class="form-row">
+        <div class="field"><label>date</label><input type="date" id="golf-date"></div>
+        <div class="field"><label>course</label><select id="golf-course"><option>Hickory Swing</option><option>Meadowlark (free w/ Josh)</option><option>Eagle Falls</option><option>Anaconda Hills</option><option>Other</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>holes</label><select id="golf-holes"><option value="9">9 holes</option><option value="18">18 holes</option></select></div>
+        <div class="field"><label>score</label><input type="number" id="golf-score" placeholder="42"></div>
+        <div class="field"><label>par</label><input type="number" id="golf-par" placeholder="36"></div>
+        <button class="btn btn-primary" onclick="logGolf()">Log</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">club distances</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:.75rem;font-family:'DM Mono',monospace">tap a club to update</div>
+      <div class="club-grid" id="club-grid"></div>
+      <div class="form-row" style="margin-top:.5rem;margin-bottom:0" id="club-edit-row">
+        <div class="field"><label id="club-edit-label">selected club</label><input type="number" id="club-dist-input" placeholder="yards"></div>
+        <button class="btn btn-primary" onclick="saveClubDist()">Save</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-title">round history</div>
+    <div style="overflow-x:auto"><table class="log-table"><thead><tr><th>Date</th><th>Course</th><th>Holes</th><th>Score</th><th>Par</th><th>+/-</th><th></th></tr></thead><tbody id="golf-log-body"></tbody></table>
+    <div class="empty-state" id="golf-empty">No rounds logged yet.</div></div>
+  </div>
+</div>
+
+<!-- HABITS -->
+<div class="tab-panel" id="panel-habits">
+  <div class="grid-2" style="margin-bottom:1rem">
+    <div class="card">
+      <div class="section-title">today — <span id="habit-today-date" style="color:var(--work);font-family:'DM Mono',monospace"></span></div>
+      <div id="habit-list"></div>
+    </div>
+    <div class="card">
+      <div class="section-title">manage habits</div>
+      <div id="habit-manage-list" style="margin-bottom:.75rem"></div>
+      <div class="form-row" style="margin-bottom:0">
+        <div class="field"><label>new habit</label><input type="text" id="habit-new-input" placeholder="e.g. Cold shower"></div>
+        <button class="btn btn-primary" onclick="addHabit()">Add</button>
+      </div>
+    </div>
+  </div>
+  <div class="card"><div class="section-title">this week</div><div id="habit-week-grid"></div></div>
+</div>
+
+<!-- TENNIS -->
+<div class="tab-panel" id="panel-tennis">
+  <div class="grid-4" style="margin-bottom:1.25rem">
+    <div class="stat"><div class="stat-label">sessions</div><div class="stat-value blue" id="ten-sessions">0</div><div class="stat-sub">this summer</div></div>
+    <div class="stat"><div class="stat-label">match record</div><div class="stat-value green" id="ten-record">0-0</div><div class="stat-sub">W-L</div></div>
+    <div class="stat"><div class="stat-label">sets won</div><div class="stat-value amber" id="ten-sets">0</div><div class="stat-sub">this summer</div></div>
+    <div class="stat"><div class="stat-label">court</div><div class="stat-value coral" style="font-size:16px;margin-top:6px">Meadowlark</div><div class="stat-sub">reserve ahead</div></div>
+  </div>
+  <div class="grid-2" style="margin-bottom:1rem">
+    <div class="card">
+      <div class="section-title">log session</div>
+      <div class="form-row">
+        <div class="field"><label>date</label><input type="date" id="ten-date"></div>
+        <div class="field"><label>type</label><select id="ten-type"><option value="practice">Practice / drill</option><option value="match">Match</option><option value="serve">Serve practice</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>opponent</label><input type="text" id="ten-opponent" placeholder="name"></div>
+        <div class="field"><label>result</label><select id="ten-result"><option value="W">Win</option><option value="L">Loss</option></select></div>
+        <div class="field"><label>score</label><input type="text" id="ten-score" placeholder="6-3, 7-5"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>notes</label><input type="text" id="ten-notes" placeholder="what clicked, what didn't..."></div>
+        <button class="btn btn-primary" onclick="logTennis()">Log</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">georgia tech prep focus</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:1rem">
+        <div style="font-size:12px;display:flex;gap:8px;color:var(--muted)"><span style="color:var(--activity);font-family:'DM Mono',monospace">→</span>Serve consistency + second serve</div>
+        <div style="font-size:12px;display:flex;gap:8px;color:var(--muted)"><span style="color:var(--activity);font-family:'DM Mono',monospace">→</span>Net approach footwork</div>
+        <div style="font-size:12px;display:flex;gap:8px;color:var(--muted)"><span style="color:var(--activity);font-family:'DM Mono',monospace">→</span>Return of serve positioning</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-title">session log</div>
+    <div style="overflow-x:auto"><table class="log-table"><thead><tr><th>Date</th><th>Type</th><th>Opponent</th><th>Result</th><th>Score</th><th>Notes</th><th></th></tr></thead><tbody id="ten-log-body"></tbody></table>
+    <div class="empty-state" id="ten-empty">No sessions logged yet.</div></div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="tab-panel" id="panel-settings">
+  <div class="grid-2">
+    <div class="card">
+      <div class="section-title">identity</div>
+      <div class="settings-row">
+        <div><div class="settings-label">Your name</div><div class="settings-sub">shown in header</div></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="set-name" style="width:120px" placeholder="Eli">
+          <button class="btn btn-sm" onclick="saveName()">Save</button>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div><div class="settings-label">App title</div><div class="settings-sub">top left logo text</div></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="set-title" style="width:120px" placeholder="Summer OS">
+          <button class="btn btn-sm" onclick="saveTitle()">Save</button>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div><div class="settings-label">Hourly rate</div><div class="settings-sub">used in savings math</div></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="number" id="set-rate" style="width:80px" placeholder="17">
+          <button class="btn btn-sm" onclick="saveRate()">Save</button>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div><div class="settings-label">Savings goal ($)</div><div class="settings-sub">default $10,000</div></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="number" id="set-goal" style="width:100px" placeholder="10000">
+          <button class="btn btn-sm" onclick="saveGoal()">Save</button>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div><div class="settings-label">Starting balance ($)</div><div class="settings-sub">your balance at day 1</div></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="number" id="set-start" style="width:100px" placeholder="5821">
+          <button class="btn btn-sm" onclick="saveStart()">Save</button>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div><div class="settings-label">Deadline</div><div class="settings-sub">savings target date</div></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="date" id="set-deadline" style="width:140px">
+          <button class="btn btn-sm" onclick="saveDeadline()">Save</button>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div><div class="settings-label">Meadowlark free rounds</div><div class="settings-sub">adjust if needed</div></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="number" id="set-mead" style="width:60px" min="0" max="5">
+          <button class="btn btn-sm" onclick="saveMead()">Save</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">data</div>
+      <div class="settings-row">
+        <div><div class="settings-label">Export all data</div><div class="settings-sub">saves a JSON backup</div></div>
+        <button class="btn btn-sm" onclick="exportData()">Export</button>
+      </div>
+      <div class="settings-row">
+        <div><div class="settings-label">Import data</div><div class="settings-sub">restore from backup</div></div>
+        <div><input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(this)"><button class="btn btn-sm" onclick="document.getElementById('import-file').click()">Import</button></div>
+      </div>
+      <div class="settings-row">
+        <div><div class="settings-label">Clear all data</div><div class="settings-sub" style="color:var(--danger)">cannot be undone</div></div>
+        <button class="btn btn-sm btn-danger" onclick="clearAll()">Clear</button>
+      </div>
+      <div style="margin-top:1.5rem">
+        <div class="section-title">install as app</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.7">
+          <strong style="color:var(--text)">Safari on Mac:</strong> File → Add to Dock<br>
+          <strong style="color:var(--text)">Safari on iPhone:</strong> Share → Add to Home Screen<br>
+          <strong style="color:var(--text)">Chrome:</strong> Address bar → Install icon
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ── STORAGE ──
+function load(k,def){try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):def}catch{return def}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+
+// ── SETTINGS STATE ──
+let cfg=load('cfg',{name:'Eli',title:'Summer OS',rate:17,goal:10000,start:5821,deadline:'2026-08-01'});
+let savLog=load('sav_log',[]);
+let gymLog=load('gym_log',[]);
+let gymExercises=load('gym_exercises',['Bench Press','Squat','Deadlift','Pull-up','Dip','Overhead Press','Row Machine','Kettlebell Swing','Box Jump']);
+let golfLog=load('golf_log',[]);
+let clubDists=load('club_dists',{Driver:0,'3-Wood':0,'5-Iron':0,'6-Iron':0,'7-Iron':0,'8-Iron':0,'9-Iron':0,'PW':0,'SW':0,'Putter':0});
+let habitLog=load('habit_log',{});
+let tenLog=load('ten_log',[]);
+let schedActivities=load('sched_acts',{0:'Golf @ Meadowlark (Josh)',1:'Tennis',2:'Lift',3:'Tennis',4:'CRX practice',5:'Golf @ Hickory Swing',6:'Rest'});
+let meadFree=load('mead_free',3);
+let selectedEx='all';
+let selectedClub=null;
+let currentSchedDay=0;
+
+let HABITS=load('habits_cfg',[
+  {id:'bed',label:'Make bed'},
+  {id:'shower',label:'10-min shower timer'},
+  {id:'lunch',label:'Pack lunch'},
+  {id:'activity',label:'Athletic activity'},
+  {id:'insta',label:'No Instagram app'},
+  {id:'plan',label:'Write plan for tomorrow'},
+  {id:'read',label:'Read scriptures / book'},
+  {id:'phone',label:'Phone to kitchen by 9:30'},
+  {id:'whiten',label:'Whitening strips'},
+  {id:'retainer',label:'Retainer in'},
+  {id:'sleep',label:'Lights out by 10:15'},
+]);
+
+const DAYS_FULL=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const DAY_SUBS=['Work day · 8:30–4:00','Work day · 8:30–4:00','Work day · 8:30–4:00','Work day · 8:30–4:00','Work day · 8:30–4:00','Day off · meal prep day','Church · 10:30–12:30'];
+const ACT_OPTS={
+  0:['Golf @ Meadowlark (Josh)','Golf @ Hickory Swing','Lift','Tennis'],
+  1:['Tennis','Lift','Golf @ Hickory Swing'],
+  2:['Lift','Tennis','CRX practice'],
+  3:['Tennis','Golf @ Hickory Swing','Lift'],
+  4:['CRX practice','Lift','Tennis'],
+  5:['Golf @ Hickory Swing','Tennis','Lift','CRX practice'],
+  6:['Rest','Easy walk','Lift (light)']
+};
+
+// ── SETTINGS ──
+function applyCfg(){
+  document.getElementById('app-name-display').textContent='/ '+cfg.name;
+  document.getElementById('app-logo').childNodes[0].textContent=cfg.title+' ';
+  document.getElementById('set-name').value=cfg.name;
+  document.getElementById('set-title').value=cfg.title;
+  document.getElementById('set-rate').value=cfg.rate;
+  document.getElementById('set-goal').value=cfg.goal;
+  document.getElementById('set-start').value=cfg.start;
+  document.getElementById('set-deadline').value=cfg.deadline.slice(0,10);
+  document.getElementById('set-mead').value=meadFree;
+  document.title=cfg.title;
+}
+function saveCfgKey(k,v){cfg[k]=v;save('cfg',cfg);applyCfg();renderDashboard();renderSavings();}
+function saveName(){saveCfgKey('name',document.getElementById('set-name').value||'Eli')}
+function saveTitle(){saveCfgKey('title',document.getElementById('set-title').value||'Summer OS')}
+function saveRate(){const v=parseFloat(document.getElementById('set-rate').value);if(!isNaN(v)&&v>0)saveCfgKey('rate',v);}
+function saveGoal(){const v=parseFloat(document.getElementById('set-goal').value);if(!isNaN(v)&&v>0)saveCfgKey('goal',v);}
+function saveStart(){const v=parseFloat(document.getElementById('set-start').value);if(!isNaN(v)&&v>=0)saveCfgKey('start',v);}
+function saveDeadline(){const v=document.getElementById('set-deadline').value;if(v)saveCfgKey('deadline',v);}
+function saveMead(){const v=parseInt(document.getElementById('set-mead').value);if(!isNaN(v)&&v>=0){meadFree=v;save('mead_free',meadFree);renderGolf();renderDashboard();}}
+
+function exportData(){
+  const data={cfg,savLog,gymLog,gymExercises,golfLog,clubDists,habitLog,tenLog,schedActivities,meadFree};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='summer_os_backup_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+}
+function importData(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      if(d.cfg)cfg=d.cfg;
+      if(d.savLog)savLog=d.savLog;
+      if(d.gymLog)gymLog=d.gymLog;
+      if(d.gymExercises)gymExercises=d.gymExercises;
+      if(d.golfLog)golfLog=d.golfLog;
+      if(d.clubDists)clubDists=d.clubDists;
+      if(d.habitLog)habitLog=d.habitLog;
+      if(d.tenLog)tenLog=d.tenLog;
+      if(d.schedActivities)schedActivities=d.schedActivities;
+      if(d.meadFree!==undefined)meadFree=d.meadFree;
+      save('cfg',cfg);save('sav_log',savLog);save('gym_log',gymLog);save('gym_exercises',gymExercises);
+      save('golf_log',golfLog);save('club_dists',clubDists);save('habit_log',habitLog);
+      save('ten_log',tenLog);save('sched_acts',schedActivities);save('mead_free',meadFree);
+      applyCfg();renderDashboard();renderSavings();renderGym();renderGolf();renderHabits();renderTennis();
+      alert('Data imported successfully.');
+    }catch{alert('Invalid backup file.');}
+  };
+  reader.readAsText(file);
+}
+function clearAll(){
+  if(!confirm('Clear ALL data? This cannot be undone.'))return;
+  localStorage.clear();
+  location.reload();
+}
+
+// ── TAB ──
+function showTab(id,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  btn.classList.add('active');
+  const renders={dashboard:renderDashboard,savings:renderSavings,gym:renderGym,golf:renderGolf,habits:renderHabits,tennis:renderTennis,schedule:()=>renderSched(currentSchedDay)};
+  if(renders[id])renders[id]();
+}
+
+// ── HELPERS ──
+function currentBalance(){
+  let b=cfg.start;
+  savLog.forEach(e=>{
+    if(e.type==='balance')b=e.amount;
+    else if(e.type==='paycheck')b+=e.amount;
+    else if(e.type==='expense')b-=e.amount;
+  });
+  return b;
+}
+function weeksLeft(){
+  const now=new Date();
+  const dl=new Date(cfg.deadline);
+  return Math.max(0,Math.ceil((dl-now)/(1000*60*60*24*7)));
+}
+function fmt$(n){return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function todayKey(){return new Date().toISOString().slice(0,10)}
+function weekDates(){
+  const today=new Date();const day=today.getDay();
+  const mon=new Date(today);mon.setDate(today.getDate()-(day===0?6:day-1));
+  return Array.from({length:7},(_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d.toISOString().slice(0,10)});
+}
+
+// ── DASHBOARD ──
+function renderDashboard(){
+  const bal=currentBalance();
+  const rem=Math.max(0,cfg.goal-bal);
+  const wl=weeksLeft();
+  const range=cfg.goal-cfg.start;
+  const gained=bal-cfg.start;
+  const pct=range>0?Math.min(100,Math.round((gained/range)*100)):100;
+  const barPct=range>0?Math.max(0,Math.min(100,(gained/range)*100)):100;
+
+  document.getElementById('dash-balance').textContent=fmt$(bal);
+  document.getElementById('dash-weeks').textContent=wl+' wks';
+  document.getElementById('dash-gym').textContent=gymLog.length;
+  document.getElementById('dash-rounds').textContent=golfLog.length;
+  document.getElementById('dash-mead').textContent=meadFree;
+  document.getElementById('dash-progress-bar').style.width=barPct+'%';
+  document.getElementById('dash-progress-pct').textContent=pct+'%';
+  document.getElementById('dash-start-label').textContent=fmt$(cfg.start);
+  document.getElementById('dash-goal-label').textContent=fmt$(cfg.goal);
+
+  const today=todayKey();
+  const todayH=habitLog[today]||{};
+  document.getElementById('dash-habits-today').innerHTML=HABITS.map(h=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--faint)">
+      <div style="width:8px;height:8px;border-radius:50%;background:${todayH[h.id]?'var(--food)':'var(--border-light)'}"></div>
+      <div style="font-size:12px;color:${todayH[h.id]?'var(--text)':'var(--muted)'}">${h.label}</div>
+    </div>`).join('');
+
+  const rules=['Phone to kitchen at 9:30pm','10-min shower timer','Instagram via Safari only','Meal prep every Saturday','Brawl Stars is deleted'];
+  document.getElementById('dash-rules').innerHTML=rules.map((r,i)=>`
+    <div style="font-size:12px;color:var(--muted);display:flex;gap:8px">
+      <span style="color:var(--activity);font-family:'DM Mono',monospace">0${i+1}</span>${r}
+    </div>`).join('');
+
+  const prs=computePRs();
+  const prEl=document.getElementById('dash-prs');
+  if(!Object.keys(prs).length){prEl.innerHTML='<div class="empty-state" style="padding:.5rem 0">Log some lifts to see PRs.</div>';return;}
+  prEl.innerHTML=Object.entries(prs).slice(0,6).map(([ex,pr])=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--faint)">
+      <div style="font-size:12px">${ex}</div>
+      <div class="pr-badge">${pr.weight} lbs × ${pr.reps}</div>
+    </div>`).join('');
+}
+
+// ── SAVINGS ──
+function logSavings(){
+  const date=document.getElementById('sav-date').value;
+  const type=document.getElementById('sav-type').value;
+  const amount=parseFloat(document.getElementById('sav-amount').value);
+  const note=document.getElementById('sav-note').value;
+  if(!date||isNaN(amount)||amount<=0)return;
+  savLog.push({date,type,amount,note,id:Date.now()});
+  save('sav_log',savLog);
+  document.getElementById('sav-amount').value='';
+  document.getElementById('sav-note').value='';
+  renderSavings();
+}
+function deleteSav(id){savLog=savLog.filter(e=>e.id!==id);save('sav_log',savLog);renderSavings();}
+function renderSavings(){
+  const bal=currentBalance();
+  const rem=Math.max(0,cfg.goal-bal);
+  const wl=weeksLeft();
+  const hrs=rem/cfg.rate;
+  const perWeek=wl>0?(rem/wl):0;
+  const range=cfg.goal-cfg.start;
+  const gained=bal-cfg.start;
+  const pct=range>0?Math.round(Math.min(100,(gained/range)*100)):100;
+  const barPct=range>0?Math.max(0,Math.min(100,(gained/range)*100)):100;
+  const onTrack=perWeek<=(cfg.rate*30);
+
+  document.getElementById('sav-balance').textContent=fmt$(bal);
+  document.getElementById('sav-remaining').textContent=fmt$(rem)+' to go';
+  document.getElementById('sav-per-week').textContent=fmt$(perWeek);
+  document.getElementById('sav-weeks').textContent=wl+' weeks left';
+  document.getElementById('sav-hours').textContent=Math.round(hrs)+' hrs';
+  document.getElementById('sav-rate-label').textContent='@ $'+cfg.rate+'/hr';
+  document.getElementById('sav-ontrack').textContent=onTrack?'✓ Yes':'⚠ Tight';
+  document.getElementById('sav-ontrack').className='stat-value '+(onTrack?'green':'amber');
+  document.getElementById('sav-ontrack-sub').textContent=onTrack?'pace is good':'check your hours';
+  document.getElementById('sav-pct').textContent=pct+'%';
+  document.getElementById('sav-bar').style.width=barPct+'%';
+  document.getElementById('sav-start').textContent=fmt$(cfg.start);
+  document.getElementById('sav-goal').textContent=fmt$(cfg.goal);
+
+  const sorted=[...savLog].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  document.getElementById('sav-log-body').innerHTML=sorted.map(e=>`<tr>
+    <td>${e.date}</td>
+    <td><span style="color:${e.type==='paycheck'?'var(--food)':e.type==='expense'?'var(--danger)':'var(--work)'}">${e.type}</span></td>
+    <td>${e.type==='expense'?'-':'+'} ${fmt$(e.amount)}</td>
+    <td>${e.note||'—'}</td>
+    <td><button class="delete-btn" onclick="deleteSav(${e.id})">×</button></td>
+  </tr>`).join('');
+  document.getElementById('sav-empty').style.display=sorted.length?'none':'block';
+}
+
+// ── GYM ──
+function renderExTabs(){
+  document.getElementById('ex-tabs').innerHTML=[{id:'all',label:'All'},...gymExercises.map(e=>({id:e,label:e}))].map(e=>`
+    <div class="ex-tab ${selectedEx===e.id?'active':''}" onclick="selectEx('${e.id}')">${e.label}</div>`).join('');
+  document.getElementById('gym-exercise').innerHTML=gymExercises.map(e=>`<option>${e}</option>`).join('');
+}
+function selectEx(id){selectedEx=id;renderGym();}
+function addExercise(){
+  const name=document.getElementById('gym-custom-ex').value.trim();
+  if(!name||gymExercises.includes(name))return;
+  gymExercises.push(name);save('gym_exercises',gymExercises);
+  document.getElementById('gym-custom-ex').value='';renderGym();
+}
+function computePRs(){
+  const prs={};
+  gymLog.forEach(e=>{
+    if(!prs[e.exercise]||e.weight>prs[e.exercise].weight||(e.weight===prs[e.exercise].weight&&e.reps>prs[e.exercise].reps))
+      prs[e.exercise]={weight:e.weight,reps:e.reps,date:e.date};
+  });
+  return prs;
+}
+function logGym(){
+  const date=document.getElementById('gym-date').value;
+  const exercise=document.getElementById('gym-exercise').value;
+  const weight=parseFloat(document.getElementById('gym-weight').value);
+  const reps=parseInt(document.getElementById('gym-reps').value);
+  const sets=parseInt(document.getElementById('gym-sets').value)||1;
+  if(!date||!exercise||isNaN(weight)||isNaN(reps))return;
+  gymLog.push({date,exercise,weight,reps,sets,id:Date.now()});save('gym_log',gymLog);
+  document.getElementById('gym-weight').value='';document.getElementById('gym-reps').value='';document.getElementById('gym-sets').value='';
+  renderGym();
+}
+function deleteGym(id){gymLog=gymLog.filter(e=>e.id!==id);save('gym_log',gymLog);renderGym();}
+function renderGym(){
+  renderExTabs();
+  const prs=computePRs();
+  document.getElementById('gym-prs').innerHTML=Object.keys(prs).length?Object.entries(prs).map(([ex,pr])=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--faint)">
+      <div style="font-size:12px">${ex}</div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span class="pr-badge">${pr.weight} lbs × ${pr.reps}</span>
+        <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">${pr.date}</span>
+      </div>
+    </div>`).join(''):'<div class="empty-state" style="padding:.5rem 0">No PRs yet.</div>';
+  document.getElementById('gym-log-ex-label').textContent=selectedEx==='all'?'all exercises':selectedEx;
+  const filtered=selectedEx==='all'?gymLog:gymLog.filter(e=>e.exercise===selectedEx);
+  const sorted=[...filtered].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  document.getElementById('gym-log-body').innerHTML=sorted.map(e=>`<tr>
+    <td>${e.date}</td><td>${e.exercise}</td><td>${e.weight} lbs</td><td>${e.reps}</td><td>${e.sets}</td>
+    <td>${Math.round(e.weight*e.reps*e.sets)} lbs</td>
+    <td><button class="delete-btn" onclick="deleteGym(${e.id})">×</button></td>
+  </tr>`).join('');
+  document.getElementById('gym-empty').style.display=sorted.length?'none':'block';
+}
+
+// ── GOLF ──
+function renderClubGrid(){
+  document.getElementById('club-grid').innerHTML=Object.entries(clubDists).map(([club,dist])=>`
+    <div class="club-card ${selectedClub===club?'selected':''}" onclick="selectClub('${club}')">
+      <div class="club-name">${club}</div>
+      <div class="club-dist">${dist||'—'}</div>
+      <div class="club-unit">yards</div>
+    </div>`).join('');
+}
+function selectClub(name){
+  selectedClub=name;
+  document.getElementById('club-edit-label').textContent=name;
+  document.getElementById('club-dist-input').value=clubDists[name]||'';
+  document.getElementById('club-edit-row').style.display='flex';
+  renderClubGrid();
+}
+function saveClubDist(){
+  if(!selectedClub)return;
+  const val=parseInt(document.getElementById('club-dist-input').value);
+  if(!isNaN(val)&&val>0){clubDists[selectedClub]=val;save('club_dists',clubDists);}
+  renderClubGrid();
+}
+function logGolf(){
+  const date=document.getElementById('golf-date').value;
+  const course=document.getElementById('golf-course').value;
+  const holes=parseInt(document.getElementById('golf-holes').value);
+  const score=parseInt(document.getElementById('golf-score').value);
+  const par=parseInt(document.getElementById('golf-par').value);
+  if(!date||isNaN(score))return;
+  if(course.includes('Meadowlark')&&meadFree>0){meadFree--;save('mead_free',meadFree);}
+  golfLog.push({date,course,holes,score,par,id:Date.now()});save('golf_log',golfLog);
+  document.getElementById('golf-score').value='';document.getElementById('golf-par').value='';
+  renderGolf();
+}
+function deleteGolf(id){golfLog=golfLog.filter(e=>e.id!==id);save('golf_log',golfLog);renderGolf();}
+function renderGolf(){
+  renderClubGrid();
+  const rounds18=golfLog.filter(e=>e.holes===18);
+  const avg=rounds18.length?Math.round(rounds18.reduce((s,e)=>s+e.score,0)/rounds18.length):null;
+  const best=golfLog.length?golfLog.reduce((b,e)=>(!b||e.score<b.score)?e:b,null):null;
+  document.getElementById('golf-rounds-total').textContent=golfLog.length;
+  document.getElementById('golf-avg-score').textContent=avg||'—';
+  document.getElementById('golf-best').textContent=best?best.score:'—';
+  document.getElementById('golf-best-course').textContent=best?best.course:'—';
+  document.getElementById('golf-mead-left').textContent=meadFree;
+  const sorted=[...golfLog].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  document.getElementById('golf-log-body').innerHTML=sorted.map(e=>{
+    const diff=e.par?e.score-e.par:null;
+    const ds=diff===null?'—':(diff>0?'+'+diff:diff===0?'E':diff);
+    const dc=diff===null?'var(--muted)':diff>0?'var(--danger)':diff<0?'var(--food)':'var(--work)';
+    return `<tr><td>${e.date}</td><td>${e.course}</td><td>${e.holes}</td><td>${e.score}</td><td>${e.par||'—'}</td>
+      <td style="color:${dc};font-weight:500">${ds}</td>
+      <td><button class="delete-btn" onclick="deleteGolf(${e.id})">×</button></td></tr>`;
+  }).join('');
+  document.getElementById('golf-empty').style.display=sorted.length?'none':'block';
+}
+
+// ── HABITS ──
+function toggleHabit(id){
+  const key=todayKey();if(!habitLog[key])habitLog[key]={};
+  habitLog[key][id]=!habitLog[key][id];save('habit_log',habitLog);renderHabits();
+}
+function toggleHabitDate(id,key){
+  if(!habitLog[key])habitLog[key]={};
+  habitLog[key][id]=!habitLog[key][id];save('habit_log',habitLog);renderHabits();
+}
+function addHabit(){
+  const input=document.getElementById('habit-new-input');
+  const label=input.value.trim();
+  if(!label)return;
+  const id='h_'+Date.now();
+  HABITS.push({id,label});
+  save('habits_cfg',HABITS);
+  input.value='';
+  renderHabits();
+}
+function deleteHabit(id){
+  HABITS=HABITS.filter(h=>h.id!==id);
+  save('habits_cfg',HABITS);
+  renderHabits();
+}
+function renderHabits(){
+  const today=todayKey();const todayH=habitLog[today]||{};
+  document.getElementById('habit-today-date').textContent=today;
+  document.getElementById('habit-list').innerHTML=HABITS.map(h=>`
+    <div class="habit-row">
+      <div class="habit-name">${h.label}</div>
+      <div class="habit-check ${todayH[h.id]?'checked':''}" onclick="toggleHabit('${h.id}')"></div>
+    </div>`).join('');
+  document.getElementById('habit-manage-list').innerHTML=HABITS.map(h=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--faint)">
+      <div style="font-size:12px;color:var(--muted)">${h.label}</div>
+      <button class="delete-btn" onclick="deleteHabit('${h.id}')">×</button>
+    </div>`).join('');
+  const dates=weekDates();const dl=['M','T','W','T','F','S','S'];
+  document.getElementById('habit-week-grid').innerHTML=HABITS.map(h=>`
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-family:'DM Mono',monospace">${h.label}</div>
+      <div class="habit-grid">${dl.map((l,i)=>{
+        const key=dates[i];const done=habitLog[key]&&habitLog[key][h.id];
+        return `<div><div class="habit-day-label">${l}</div>
+          <div class="habit-cell ${done?'done':''}" onclick="toggleHabitDate('${h.id}','${key}')"></div></div>`;
+      }).join('')}</div>
+    </div>`).join('');
+}
+
+// ── TENNIS ──
+function logTennis(){
+  const date=document.getElementById('ten-date').value;
+  const type=document.getElementById('ten-type').value;
+  const opponent=document.getElementById('ten-opponent').value;
+  const result=type==='match'?document.getElementById('ten-result').value:null;
+  const score=document.getElementById('ten-score').value;
+  const notes=document.getElementById('ten-notes').value;
+  if(!date)return;
+  tenLog.push({date,type,opponent,result,score,notes,id:Date.now()});save('ten_log',tenLog);
+  document.getElementById('ten-opponent').value='';document.getElementById('ten-score').value='';document.getElementById('ten-notes').value='';
+  renderTennis();
+}
+function deleteTen(id){tenLog=tenLog.filter(e=>e.id!==id);save('ten_log',tenLog);renderTennis();}
+function renderTennis(){
+  const matches=tenLog.filter(e=>e.type==='match');
+  const wins=matches.filter(e=>e.result==='W').length;
+  const losses=matches.filter(e=>e.result==='L').length;
+  let setsW=0;
+  matches.forEach(e=>{if(e.score){e.score.split(',').forEach(s=>{const p=s.trim().split('-');if(p.length===2&&parseInt(p[0])>parseInt(p[1]))setsW++;})}});
+  document.getElementById('ten-sessions').textContent=tenLog.length;
+  document.getElementById('ten-record').textContent=wins+'-'+losses;
+  document.getElementById('ten-sets').textContent=setsW;
+  const sorted=[...tenLog].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  document.getElementById('ten-log-body').innerHTML=sorted.map(e=>`<tr>
+    <td>${e.date}</td><td>${e.type}</td><td>${e.opponent||'—'}</td>
+    <td>${e.result?`<span style="color:${e.result==='W'?'var(--food)':'var(--danger)'}">${e.result}</span>`:'—'}</td>
+    <td>${e.score||'—'}</td><td>${e.notes||'—'}</td>
+    <td><button class="delete-btn" onclick="deleteTen(${e.id})">×</button></td>
+  </tr>`).join('');
+  document.getElementById('ten-empty').style.display=sorted.length?'none':'block';
+}
+
+// ── SCHEDULE ──
+function getBlocks(dayIdx){
+  const act=schedActivities[dayIdx]||ACT_OPTS[dayIdx][0];
+  if(dayIdx===6)return[
+    {t:'8:15 am',type:'sleep',l:'Wake up',s:'Up and ready for breakfast by 9'},
+    {t:'8:30 am',type:'food',l:'Breakfast',s:'Sit-down — no rush'},
+    {t:'9:30 am',type:'buffer',l:'Get ready for church',s:'Leave ~10:15'},
+    {t:'10:30 am',type:'church',l:'Church',s:'Full block · present'},
+    {t:'12:30 pm',type:'buffer',l:'After church / lunch',s:'Family · decompress · mission prep'},
+    {t:'2:00 pm',type:'buffer',l:'Rest / reading / free',s:'Sabbath — keep it low-key'},
+    {t:'5:00 pm',type:'food',l:'Family dinner',s:'Sunday dinner'},
+    {t:'6:00 pm',type:'buffer',l:'Free / prep for the week',s:'Plan Monday · review goals'},
+    {t:'9:30 pm',type:'sleep',l:'Phone to kitchen',s:'Wind-down'},
+    {t:'10:15 pm',type:'sleep',l:'Lights out',s:'Work starts 8:30 tomorrow'},
+  ];
+  if(dayIdx===5)return[
+    {t:'8:00 am',type:'sleep',l:'Wake up',s:'Slight sleep-in'},
+    {t:'8:15 am',type:'food',l:'Breakfast + lunch meal prep',s:'Cook for the week · chicken, rice, broccoli'},
+    {t:'10:00 am',type:'activity',l:act,s:ACT_OPTS[5].join(' · ')},
+    {t:'12:00 pm',type:'food',l:'Lunch',s:'From prep'},
+    {t:'12:30 pm',type:'buffer',l:'Free block',s:'Errands · CRX · mission prep · social'},
+    {t:'3:00 pm',type:'activity',l:'Second activity (optional)',s:'Whatever you skipped this week'},
+    {t:'5:00 pm',type:'food',l:'Family dinner',s:'Earned it'},
+    {t:'5:30 pm',type:'buffer',l:'Free / social',s:'Earned downtime'},
+    {t:'9:30 pm',type:'sleep',l:'Phone to kitchen',s:'Wind-down'},
+    {t:'10:15 pm',type:'sleep',l:'Lights out',s:''},
+  ];
+  return[
+    {t:'7:15 am',type:'sleep',l:'Wake up — no phone',s:'Shower (10-min timer) · get dressed'},
+    {t:'7:35 am',type:'food',l:'Breakfast + pack lunch',s:'Grab from prep'},
+    {t:'7:50 am',type:'buffer',l:'Buffer → out the door',s:'Leave 8:10–8:15'},
+    {t:'8:30 am',type:'work',l:'D.A. Davidson',s:'Full day · no socials · locked in'},
+    {t:'4:00 pm',type:'buffer',l:'Commute home',s:'12 min · decompress'},
+    {t:'4:15 pm',type:'food',l:'Change + snack',s:'Fuel before activity block'},
+    {t:'4:30 pm',type:'activity',l:act,s:ACT_OPTS[dayIdx].join(' · ')},
+    {t:'6:00 pm',type:'food',l:'Family dinner',s:'Mom cooks · you show up'},
+    {t:'6:45 pm',type:'buffer',l:'Free / wind down',s:'Family · reading · mission prep · errands'},
+    {t:'9:30 pm',type:'sleep',l:'Phone to kitchen',s:'No screens'},
+    {t:'10:15 pm',type:'sleep',l:'Lights out',s:'9 hrs → 7:15 wake'},
+  ];
+}
+function renderSched(dayIdx){
+  currentSchedDay=dayIdx;
+  document.getElementById('sched-day-title').textContent=DAYS_FULL[dayIdx];
+  document.getElementById('sched-day-sub').textContent=DAY_SUBS[dayIdx];
+  const actWrap=document.getElementById('sched-act-wrap');
+  const actSelect=document.getElementById('sched-act-select');
+  if(dayIdx===6){actWrap.style.display='none';}
+  else{
+    actWrap.style.display='flex';
+    actSelect.innerHTML=ACT_OPTS[dayIdx].map(o=>`<option ${schedActivities[dayIdx]===o?'selected':''}>${o}</option>`).join('');
+  }
+  document.getElementById('sched-blocks').innerHTML=getBlocks(dayIdx).map((b,i,arr)=>`
+    <div class="sblock">
+      <div class="sblock-time">${b.t}</div>
+      <div class="sblock-bar b-${b.type}">
+        <div class="sblock-label">${b.l}</div>
+        ${b.s?`<div class="sblock-sub">${b.s}</div>`:''}
+      </div>
+    </div>${i<arr.length-1?'<div class="sdivider"></div>':''}`).join('');
+}
+function selectDay(idx,el){
+  document.querySelectorAll('.day-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');renderSched(idx);
+}
+function setSchedActivity(val){
+  schedActivities[currentSchedDay]=val;save('sched_acts',schedActivities);renderSched(currentSchedDay);
+}
+
+// ── INIT ──
+(function init(){
+  const today=new Date();
+  document.getElementById('sav-date').valueAsDate=today;
+  document.getElementById('gym-date').valueAsDate=today;
+  document.getElementById('golf-date').valueAsDate=today;
+  document.getElementById('ten-date').valueAsDate=today;
+  document.getElementById('header-date').textContent='Jun 3 – Jul 31, 2026 · Great Falls, MT';
+  applyCfg();
+  renderDashboard();renderSched(0);renderSavings();renderGym();renderGolf();renderHabits();renderTennis();
+})();
+</script>
+</body>
+</html>
